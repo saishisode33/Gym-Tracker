@@ -19,7 +19,7 @@ main{padding:8px 12px 100px;max-width:820px;margin:auto}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin:10px 0;box-shadow:0 1px 2px #00000008}
 .row{display:flex;justify-content:space-between;gap:12px;align-items:center}.date{font-weight:800;font-size:20px}
 .muted{color:var(--muted)}.big{font-size:34px;font-weight:800}.pill{display:inline-block;background:#eef0f3;border-radius:999px;padding:5px 9px;font-size:12px;margin:2px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formgrid{display:grid;grid-template-columns:1fr;gap:10px}.full{width:100%}
 .section{margin-top:16px}.section h3{margin:0 0 8px;font-size:17px}.item{padding:10px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
 .item b{display:block}.meta{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.4}
 .search,input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px;font-family:inherit}
@@ -57,14 +57,62 @@ table.exportPreview th,table.exportPreview td{border:1px solid var(--line);paddi
 
 <script src="data.js"></script>
 <script>
-const seed=(window.GYM_DATA&&window.GYM_DATA.workouts)||[];
+const seed=(window.GYM_DATA&&Array.isArray(window.GYM_DATA.workouts))?window.GYM_DATA.workouts:[];
 const V3='gymTrackerWorkoutsV3';
 const V2='gymTrackerWorkoutsV2';
-let workouts=JSON.parse(localStorage.getItem(V3)||'null');
-if(!workouts){
-  workouts=JSON.parse(localStorage.getItem(V2)||'null')||seed;
-  localStorage.setItem(V3,JSON.stringify(workouts));
+const V1='gymTrackerWorkouts';
+function safeParse(key){
+  try{
+    const raw=localStorage.getItem(key);
+    return raw?JSON.parse(raw):null;
+  }catch(e){
+    return null;
+  }
 }
+function normalizeWorkouts(value){
+  if(!Array.isArray(value)) return [];
+  return value.map(w=>{
+    if(!w || typeof w!=='object') return null;
+    const sections=Array.isArray(w.sections)?w.sections.map(s=>{
+      if(!s || typeof s!=='object') return null;
+      return {
+        name:String(s.name||'').trim(),
+        items:Array.isArray(s.items)?s.items.map(i=>{
+          if(!i || typeof i!=='object') return null;
+          return {
+            name:String(i.name||'').trim(),
+            raw:i.raw??String(i.name||''),
+            sets:i.sets??null,
+            reps:i.reps??null,
+            weight:i.weight??null,
+            duration:i.duration??null,
+            notes:Array.isArray(i.notes)?i.notes.map(String):(i.notes?[String(i.notes)]:[]),
+            set_details:Array.isArray(i.set_details)?i.set_details.map(x=>({
+              weight:x&&x.weight!=null?String(x.weight):'',
+              reps:x&&x.reps!=null?String(x.reps):''
+            })):[]
+          };
+        }).filter(Boolean):[]
+      };
+    }).filter(Boolean):[];
+    return {
+      date:String(w.date||'').trim(),
+      source_date:String(w.source_date||w.date||'').trim(),
+      date_note:String(w.date_note||''),
+      sections
+    };
+  }).filter(w=>w && w.date && w.sections.length);
+}
+function loadWorkouts(){
+  const candidates=[safeParse(V3),safeParse(V2),safeParse(V1),seed];
+  for(const candidate of candidates){
+    const normalized=normalizeWorkouts(candidate);
+    if(normalized.length || candidate===seed) return normalized;
+  }
+  return [];
+}
+let workouts=loadWorkouts();
+try{localStorage.setItem(V3,JSON.stringify(workouts));}catch(e){}
 let tab='home';
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -91,7 +139,24 @@ function card(w){
 }
 function render(){
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
- if(tab==='home')home(); if(tab==='history')history(); if(tab==='exercises')exercises(); if(tab==='stats')stats();
+ try{
+   if(tab==='home')home();
+   if(tab==='history')history();
+   if(tab==='exercises')exercises();
+   if(tab==='stats')stats();
+ }catch(err){
+   console.error(err);
+   app.innerHTML=`<div class="card warning">
+     <h2>Workout data needs a refresh</h2>
+     <p>The app loaded, but an older saved browser format caused an error. Your GitHub files are still safe.</p>
+     <div class="actions">
+       <button class="primary" id="recover">Reload workout data</button>
+       <button class="secondary" id="resetLocal">Use imported data only</button>
+     </div>
+   </div>`;
+   document.getElementById('recover').onclick=()=>{localStorage.removeItem(V3);workouts=loadWorkouts();save();render()};
+   document.getElementById('resetLocal').onclick=()=>{localStorage.removeItem(V3);localStorage.removeItem(V2);localStorage.removeItem(V1);workouts=normalizeWorkouts(seed);save();render()};
+ }
 }
 function home(){
  const recent=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);

@@ -217,7 +217,7 @@ function newWorkout(){
      <div class="actions"><button class="secondary compact" data-detail="${it.id}">${it.detailed?'Hide set details':'＋ Detailed sets'}</button><button class="linkish compact" data-add-item="${g.id}">＋ Add exercise</button></div>
      ${it.detailed?`<div><div class="small muted">Optional set-by-set details</div>${it.set_details.map((s,si)=>`<div class="setRow"><div class="setNo">${si+1}</div><input data-sw="${it.id}:${si}" placeholder="Weight" value="${esc(s.weight)}"><input data-sr="${it.id}:${si}" placeholder="Reps" value="${esc(s.reps)}"><button class="danger compact" data-remove-set="${it.id}:${si}">×</button></div>`).join('')}<button class="secondary compact" data-add-set="${it.id}">＋ Add set</button></div>`:''}
    </div>`).join('')}
-  </div>`).join('')}`;
+  </div>`).join('');
   bind();
  }
  function findItem(id){for(const g of draft.groups){const x=g.items.find(i=>i.id===id);if(x)return x}}
@@ -259,11 +259,11 @@ function exportJSON(){
  downloadBlob(blob,'gym-tracker-backup.json');
 }
 function xmlEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
-function csvCell(s){return `"${String(s??'').replace(/"/g,'""')}"`}
+function csvCell(s){return '"'+String(s??'').replace(/"/g,'""')+'"'}
 function flatRows(){
  const rows=[['Date','Muscle Group','Exercise','Sets','Weight','Reps','Duration','Notes','Set Details']];
  workouts.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>(w.sections||[]).forEach(s=>(s.items||[]).forEach(i=>{
-  rows.push([fmtDate(w.date),s.name,i.name,i.sets||'',i.weight||'',i.reps||'',i.duration||'',(i.notes||[]).join('; '),(i.set_details||[]).map((x,n)=>`Set ${n+1}: ${x.weight||''} x ${x.reps||''}`).join('; ')]);
+  rows.push([fmtDate(w.date),s.name,i.name,i.sets||'',i.weight||'',i.reps||'',i.duration||'',(i.notes||[]).join('; '),(i.set_details||[]).map((x,n)=>'Set '+(n+1)+': '+(x.weight||'')+' x '+(x.reps||'')).join('; ')]);
  })));
  return rows;
 }

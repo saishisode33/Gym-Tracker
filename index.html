@@ -56,276 +56,40 @@ table.exportPreview th,table.exportPreview td{border:1px solid var(--line);paddi
 <button class="fab" id="newBtn">＋ New Workout</button>
 
 <script src="data.js"></script>
-<script>
-const seed=(window.GYM_DATA&&Array.isArray(window.GYM_DATA.workouts))?window.GYM_DATA.workouts:[];
-const V3='gymTrackerWorkoutsV3';
-const V2='gymTrackerWorkoutsV2';
-const V1='gymTrackerWorkouts';
-function safeParse(key){
-  try{
-    const raw=localStorage.getItem(key);
-    return raw?JSON.parse(raw):null;
-  }catch(e){
-    return null;
-  }
-}
-function normalizeWorkouts(value){
-  if(!Array.isArray(value)) return [];
-  return value.map(w=>{
-    if(!w || typeof w!=='object') return null;
-    const sections=Array.isArray(w.sections)?w.sections.map(s=>{
-      if(!s || typeof s!=='object') return null;
-      return {
-        name:String(s.name||'').trim(),
-        items:Array.isArray(s.items)?s.items.map(i=>{
-          if(!i || typeof i!=='object') return null;
-          return {
-            name:String(i.name||'').trim(),
-            raw:i.raw??String(i.name||''),
-            sets:i.sets??null,
-            reps:i.reps??null,
-            weight:i.weight??null,
-            duration:i.duration??null,
-            notes:Array.isArray(i.notes)?i.notes.map(String):(i.notes?[String(i.notes)]:[]),
-            set_details:Array.isArray(i.set_details)?i.set_details.map(x=>({
-              weight:x&&x.weight!=null?String(x.weight):'',
-              reps:x&&x.reps!=null?String(x.reps):''
-            })):[]
-          };
-        }).filter(Boolean):[]
-      };
-    }).filter(Boolean):[];
-    return {
-      date:String(w.date||'').trim(),
-      source_date:String(w.source_date||w.date||'').trim(),
-      date_note:String(w.date_note||''),
-      sections
-    };
-  }).filter(w=>w && w.date && w.sections.length);
-}
-function loadWorkouts(){
-  const candidates=[safeParse(V3),safeParse(V2),safeParse(V1),seed];
-  for(const candidate of candidates){
-    const normalized=normalizeWorkouts(candidate);
-    if(normalized.length || candidate===seed) return normalized;
-  }
-  return [];
-}
-let workouts=loadWorkouts();
-try{localStorage.setItem(V3,JSON.stringify(workouts));}catch(e){}
-let tab='home';
+<script>const seed=(window.GYM_DATA&&Array.isArray(window.GYM_DATA.workouts))?window.GYM_DATA.workouts:[];
+const V3='gymTrackerWorkoutsV3',V2='gymTrackerWorkoutsV2',V1='gymTrackerWorkouts';
+function safeParse(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):null}catch(e){return null}}
+function normalizeWorkouts(v){if(!Array.isArray(v))return [];return v.map(function(w){if(!w||typeof w!=='object')return null;const sections=Array.isArray(w.sections)?w.sections.map(function(s){if(!s||typeof s!=='object')return null;return {name:String(s.name||'').trim(),items:Array.isArray(s.items)?s.items.map(function(i){if(!i||typeof i!=='object')return null;return {name:String(i.name||'').trim(),raw:i.raw??String(i.name||''),sets:i.sets??null,reps:i.reps??null,weight:i.weight??null,duration:i.duration??null,notes:Array.isArray(i.notes)?i.notes.map(String):(i.notes?[String(i.notes)]:[]),set_details:Array.isArray(i.set_details)?i.set_details.map(function(x){return {weight:x&&x.weight!=null?String(x.weight):'',reps:x&&x.reps!=null?String(x.reps):''}}):[]}}).filter(Boolean):[]}}).filter(Boolean):[];return {date:String(w.date||'').trim(),source_date:String(w.source_date||w.date||'').trim(),date_note:String(w.date_note||''),sections:sections}}).filter(function(w){return w&&w.date&&w.sections.length})}
+function loadWorkouts(){const cs=[safeParse(V3),safeParse(V2),safeParse(V1),seed];for(const c of cs){const n=normalizeWorkouts(c);if(n.length||c===seed)return n}return []}
+let workouts=loadWorkouts(),tab='home';
+try{localStorage.setItem(V3,JSON.stringify(workouts))}catch(e){}
 const app=document.getElementById('app');
-const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const fmtDate=iso=>{const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-function save(){localStorage.setItem(V3,JSON.stringify(workouts))}
-function allItems(){
-  return workouts.flatMap(w=>(w.sections||[]).flatMap(s=>(s.items||[]).map(i=>({...i,date:w.date,section:s.name}))))
-}
-function itemMeta(i){
-  const bits=[];
-  if(i.sets) bits.push(`${esc(i.sets)} sets`);
-  if(i.weight) bits.push(esc(i.weight));
-  if(i.reps) bits.push(`${esc(i.reps)} reps`);
-  if(i.duration) bits.push(esc(i.duration));
-  if(i.notes?.length) bits.push(esc(i.notes.join('; ')));
-  return bits.join(' · ');
-}
-function card(w){
- return `<div class="card">
- <div class="row"><div class="date">${esc(fmtDate(w.date))}</div><span class="pill">${(w.sections||[]).length} section${(w.sections||[]).length===1?'':'s'}</span></div>
- ${(w.sections||[]).map(s=>`<div class="section"><h3>${esc(s.name)}</h3>${(s.items||[]).map(i=>`<div class="item"><b>${esc(i.name)}</b><div class="meta">${itemMeta(i)}</div>${i.set_details?.length?`<div class="small muted">${i.set_details.map((x,n)=>`Set ${n+1}: ${esc(x.weight||'—')} × ${esc(x.reps||'—')}`).join(' · ')}</div>`:''}</div>`).join('')}</div>`).join('')}
- </div>`;
-}
-function render(){
- document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
- try{
-   if(tab==='home')home();
-   if(tab==='history')history();
-   if(tab==='exercises')exercises();
-   if(tab==='stats')stats();
- }catch(err){
-   console.error(err);
-   app.innerHTML=`<div class="card warning">
-     <h2>Workout data needs a refresh</h2>
-     <p>The app loaded, but an older saved browser format caused an error. Your GitHub files are still safe.</p>
-     <div class="actions">
-       <button class="primary" id="recover">Reload workout data</button>
-       <button class="secondary" id="resetLocal">Use imported data only</button>
-     </div>
-   </div>`;
-   document.getElementById('recover').onclick=()=>{localStorage.removeItem(V3);workouts=loadWorkouts();save();render()};
-   document.getElementById('resetLocal').onclick=()=>{localStorage.removeItem(V3);localStorage.removeItem(V2);localStorage.removeItem(V1);workouts=normalizeWorkouts(seed);save();render()};
- }
-}
-function home(){
- const recent=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
- const today=new Date().toISOString().slice(0,10);
- app.innerHTML=`<div class="grid">
- <div class="card"><div class="big">${workouts.length}</div><div class="muted">Workout days</div></div>
- <div class="card"><div class="big">${allItems().length}</div><div class="muted">Logged items</div></div></div>
- <div class="card notice"><b>Version 3 ready</b><p class="muted">One date can now contain multiple muscle groups and multiple exercises. Cardio has its own duration/details fields. Rest-day gaps are normal and are not treated as errors.</p></div>
- <h2>Recent</h2>${recent.map(card).join('')||'<div class="empty">No workouts yet.</div>'}`;
-}
-function history(){
- app.innerHTML=`<input class="search" id="hs" placeholder="Search date, muscle group, exercise..." /><div id="hl"></div>`;
- const draw=()=>{const q=document.getElementById('hs').value.toLowerCase();const arr=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).filter(w=>JSON.stringify(w).toLowerCase().includes(q));document.getElementById('hl').innerHTML=arr.map(card).join('')||'<div class="empty">No matching workouts.</div>'};
- document.getElementById('hs').oninput=draw; draw();
-}
-function exercises(){
- const names=[...new Set(allItems().map(i=>i.name))].sort((a,b)=>a.localeCompare(b));
- app.innerHTML=`<input class="search" id="es" placeholder="Search an exercise..." /><div id="el"></div>`;
- const draw=()=>{const q=document.getElementById('es').value.toLowerCase();const n=names.filter(x=>x.toLowerCase().includes(q));document.getElementById('el').innerHTML=n.map(name=>{
- const hits=allItems().filter(i=>i.name===name).sort((a,b)=>b.date.localeCompare(a.date));
- return `<div class="card"><div class="row"><b>${esc(name)}</b><span class="pill">${hits.length} log${hits.length===1?'':'s'}</span></div>
- ${hits.map(h=>`<div class="item"><b>${esc(fmtDate(h.date))}</b><div class="meta">${esc(h.section)}${itemMeta(h)?' · '+itemMeta(h):''}</div></div>`).join('')}</div>`}).join('')||'<div class="empty">No exercises found.</div>'};
- document.getElementById('es').oninput=draw;draw();
-}
-function stats(){
- const counts={};allItems().forEach(i=>counts[i.section]=(counts[i.section]||0)+1);
- const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
- app.innerHTML=`<div class="card"><h2>Activity by muscle group</h2>${top.map(([k,v])=>`<div class="row item"><span>${esc(k)}</span><b>${v}</b></div>`).join('')||'<div class="empty">No activity yet.</div>'}</div>
- <div class="card"><h2>Export & backup</h2><p class="muted">Export your complete workout history whenever you want. Excel export creates a real .xlsx workbook; Word export creates a .doc report; JSON is the full backup.</p>
- <div class="actions"><button class="primary" id="xlsx">Export Excel</button><button class="secondary" id="word">Export Word</button><button class="secondary" id="json">Export JSON backup</button></div>
- <hr><p class="small muted">Your data is stored on this iPhone in the app's browser storage. Keep a JSON backup if the data matters to you.</p></div>`;
- document.getElementById('xlsx').onclick=exportXLSX;
- document.getElementById('word').onclick=exportWord;
- document.getElementById('json').onclick=exportJSON;
-}
-function newWorkout(){
- let draft={date:new Date().toISOString().slice(0,10),groups:[makeGroup()]};
- app.innerHTML=`<div class="card"><h2>New Workout</h2>
- <div class="formgrid"><div class="full"><label class="small muted">Date</label><input id="wd" type="date" value="${draft.date}"></div></div>
- <div id="groups"></div>
- <div class="actions"><button class="secondary" id="addGroup">＋ Add muscle group</button><button class="primary" id="saveAll">Save entire workout</button><button class="secondary" id="cancel">Cancel</button></div></div>`;
- const groupsEl=document.getElementById('groups');
- function makeGroup(){return {id:uid(),name:'',items:[makeItem()]}}
- function makeItem(){return {id:uid(),name:'',sets:'',weight:'',reps:'',duration:'',notes:'',detailed:false,set_details:[{weight:'',reps:''}]}}
- function draw(){
-  groupsEl.innerHTML=draft.groups.map((g,gi)=>`<div class="group" data-g="${g.id}">
-   <div class="row"><h3 style="margin:0">Muscle group ${gi+1}</h3>${draft.groups.length>1?`<button class="danger compact" data-remove-group="${g.id}">Remove</button>`:''}</div>
-   <input data-group-name="${g.id}" placeholder="e.g. Back, Biceps, Chest, Cardio" value="${esc(g.name)}">
-   <div class="items">${g.items.map((it,ii)=>`<div class="exerciseRow" data-i="${it.id}">
-     <div class="exerciseHead"><input data-name="${it.id}" placeholder="Exercise / cardio activity" value="${esc(it.name)}">${g.items.length>1?`<button class="danger compact" data-remove-item="${it.id}">×</button>`:''}</div>
-     <div class="setGrid">
-       <input data-sets="${it.id}" inputmode="numeric" placeholder="Sets" value="${esc(it.sets)}">
-       <input data-weight="${it.id}" placeholder="Weight (e.g. 65 kg)" value="${esc(it.weight)}">
-       <input data-reps="${it.id}" placeholder="Reps (e.g. 6)" value="${esc(it.reps)}">
-       <input data-duration="${it.id}" placeholder="Duration (e.g. 15 min)" value="${esc(it.duration)}">
-     </div>
-     <textarea data-notes="${it.id}" rows="2" placeholder="Notes: last set 35 kg × 6, drop set, interval details, etc.">${esc(it.notes)}</textarea>
-     <div class="actions"><button class="secondary compact" data-detail="${it.id}">${it.detailed?'Hide set details':'＋ Detailed sets'}</button><button class="linkish compact" data-add-item="${g.id}">＋ Add exercise</button></div>
-     ${it.detailed?`<div><div class="small muted">Optional set-by-set details</div>${it.set_details.map((s,si)=>`<div class="setRow"><div class="setNo">${si+1}</div><input data-sw="${it.id}:${si}" placeholder="Weight" value="${esc(s.weight)}"><input data-sr="${it.id}:${si}" placeholder="Reps" value="${esc(s.reps)}"><button class="danger compact" data-remove-set="${it.id}:${si}">×</button></div>`).join('')}<button class="secondary compact" data-add-set="${it.id}">＋ Add set</button></div>`:''}
-   </div>`).join('')}
-  </div>`).join('')}`;
-  bind();
- }
- function findItem(id){for(const g of draft.groups){const x=g.items.find(i=>i.id===id);if(x)return x}}
- function bind(){
-  groupsEl.querySelectorAll('[data-group-name]').forEach(e=>e.oninput=()=>{const g=draft.groups.find(x=>x.id===e.dataset.groupName);g.name=e.value});
-  groupsEl.querySelectorAll('[data-name]').forEach(e=>e.oninput=()=>findItem(e.dataset.name).name=e.value);
-  groupsEl.querySelectorAll('[data-sets]').forEach(e=>e.oninput=()=>findItem(e.dataset.sets).sets=e.value);
-  groupsEl.querySelectorAll('[data-weight]').forEach(e=>e.oninput=()=>findItem(e.dataset.weight).weight=e.value);
-  groupsEl.querySelectorAll('[data-reps]').forEach(e=>e.oninput=()=>findItem(e.dataset.reps).reps=e.value);
-  groupsEl.querySelectorAll('[data-duration]').forEach(e=>e.oninput=()=>findItem(e.dataset.duration).duration=e.value);
-  groupsEl.querySelectorAll('[data-notes]').forEach(e=>e.oninput=()=>findItem(e.dataset.notes).notes=e.value);
-  groupsEl.querySelectorAll('[data-add-item]').forEach(e=>e.onclick=()=>{draft.groups.find(g=>g.id===e.dataset.addItem).items.push(makeItem());draw()});
-  groupsEl.querySelectorAll('[data-remove-item]').forEach(e=>e.onclick=()=>{for(const g of draft.groups){g.items=g.items.filter(i=>i.id!==e.dataset.removeItem)};draw()});
-  groupsEl.querySelectorAll('[data-remove-group]').forEach(e=>e.onclick=()=>{draft.groups=draft.groups.filter(g=>g.id!==e.dataset.removeGroup);draw()});
-  groupsEl.querySelectorAll('[data-detail]').forEach(e=>e.onclick=()=>{const i=findItem(e.dataset.detail);i.detailed=!i.detailed;draw()});
-  groupsEl.querySelectorAll('[data-add-set]').forEach(e=>e.onclick=()=>{findItem(e.dataset.addSet).set_details.push({weight:'',reps:''});draw()});
-  groupsEl.querySelectorAll('[data-remove-set]').forEach(e=>e.onclick=()=>{const [id,si]=e.dataset.removeSet.split(':');const i=findItem(id);i.set_details.splice(Number(si),1);draw()});
-  groupsEl.querySelectorAll('[data-sw]').forEach(e=>e.oninput=()=>{const [id,si]=e.dataset.sw.split(':');findItem(id).set_details[Number(si)].weight=e.value});
-  groupsEl.querySelectorAll('[data-sr]').forEach(e=>e.oninput=()=>{const [id,si]=e.dataset.sr.split(':');findItem(id).set_details[Number(si)].reps=e.value});
- }
- document.getElementById('addGroup').onclick=()=>{draft.groups.push(makeGroup());draw()};
- document.getElementById('cancel').onclick=()=>render();
- document.getElementById('saveAll').onclick=()=>{
-  const date=document.getElementById('wd').value;
-  const groups=draft.groups.map(g=>({name:g.name.trim(),items:g.items.filter(i=>i.name.trim()).map(i=>({
-    name:i.name.trim(),raw:i.name.trim(),sets:i.sets.trim()||null,weight:i.weight.trim()||null,reps:i.reps.trim()||null,duration:i.duration.trim()||null,notes:i.notes.trim()?[i.notes.trim()]:[],set_details:i.detailed?i.set_details.filter(s=>s.weight||s.reps):[]
-  }))})).filter(g=>g.name&&g.items.length);
-  if(!date||!groups.length){alert('Enter a date, at least one muscle group, and at least one exercise.');return}
-  const existing=workouts.find(w=>w.date===date);
-  if(existing){
-    groups.forEach(g=>{let s=existing.sections.find(x=>x.name.toLowerCase()===g.name.toLowerCase());if(!s){s={name:g.name,items:[]};existing.sections.push(s)}s.items.push(...g.items)});
-  }else workouts.push({date,source_date:fmtDate(date),date_note:'',sections:groups});
-  save();tab='history';render();
- };
- draw();
-}
-function exportJSON(){
- const blob=new Blob([JSON.stringify(workouts,null,2)],{type:'application/json'});
- downloadBlob(blob,'gym-tracker-backup.json');
-}
-function xmlEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
-function csvCell(s){return `"${String(s??'').replace(/"/g,'""')}"`}
-function flatRows(){
- const rows=[['Date','Muscle Group','Exercise','Sets','Weight','Reps','Duration','Notes','Set Details']];
- workouts.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>(w.sections||[]).forEach(s=>(s.items||[]).forEach(i=>{
-  rows.push([fmtDate(w.date),s.name,i.name,i.sets||'',i.weight||'',i.reps||'',i.duration||'',(i.notes||[]).join('; '),(i.set_details||[]).map((x,n)=>`Set ${n+1}: ${x.weight||''} x ${x.reps||''}`).join('; ')]);
- })));
- return rows;
-}
-function exportWord(){
- const rows=flatRows();
- let body=`<h1>My Gym Tracker</h1><p>Workout history exported ${new Date().toLocaleDateString()}</p>`;
- let current='';
- workouts.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{
-  body+=`<h2>${xmlEscape(fmtDate(w.date))}</h2>`;
-  (w.sections||[]).forEach(s=>{body+=`<h3>${xmlEscape(s.name)}</h3><ul>`;(s.items||[]).forEach(i=>{body+=`<li><b>${xmlEscape(i.name)}</b> — ${xmlEscape(itemMetaPlain(i))}</li>`});body+='</ul>'});
- });
- const htmlDoc=`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:40px}h1{font-size:24pt}h2{margin-top:24px}li{margin:7px 0}</style></head><body>${body}</body></html>`;
- downloadBlob(new Blob([htmlDoc],{type:'application/msword'}),'gym-tracker-report.doc');
-}
-function itemMetaPlain(i){
- const bits=[]; if(i.sets)bits.push(`${i.sets} sets`);if(i.weight)bits.push(i.weight);if(i.reps)bits.push(`${i.reps} reps`);if(i.duration)bits.push(i.duration);if(i.notes?.length)bits.push(i.notes.join('; '));
- if(i.set_details?.length)bits.push(i.set_details.map((x,n)=>`Set ${n+1}: ${x.weight||'—'} x ${x.reps||'—'}`).join(', '));
- return bits.join(' · ');
-}
-function downloadBlob(blob,name){
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-}
-
-/* Minimal XLSX writer: creates a valid .xlsx ZIP with stored (uncompressed) XML parts. */
-const crcTable=(()=>{let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0}return t})();
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+function fmtDate(iso){const p=iso.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function save(){try{localStorage.setItem(V3,JSON.stringify(workouts))}catch(e){}}
+function allItems(){return workouts.flatMap(function(w){return (w.sections||[]).flatMap(function(s){return (s.items||[]).map(function(i){return Object.assign({},i,{date:w.date,section:s.name})})})})}
+function itemMeta(i){const b=[];if(i.sets)b.push(esc(i.sets)+' sets');if(i.weight)b.push(esc(i.weight));if(i.reps)b.push(esc(i.reps)+' reps');if(i.duration)b.push(esc(i.duration));if(i.notes&&i.notes.length)b.push(esc(i.notes.join('; ')));return b.join(' · ')}
+function card(w){let h='<div class="card"><div class="row"><div class="date">'+esc(fmtDate(w.date))+'</div><span class="pill">'+(w.sections||[]).length+' section'+((w.sections||[]).length===1?'':'s')+'</span></div>';(w.sections||[]).forEach(function(s){h+='<div class="section"><h3>'+esc(s.name)+'</h3>';(s.items||[]).forEach(function(i){h+='<div class="item"><b>'+esc(i.name)+'</b><div class="meta">'+itemMeta(i)+'</div>';if(i.set_details&&i.set_details.length){h+='<div class="small muted">';i.set_details.forEach(function(x,n){if(n)h+=' · ';h+='Set '+(n+1)+': '+esc(x.weight||'—')+' × '+esc(x.reps||'—')});h+='</div>'}h+='</div>'});h+='</div>'});return h+'</div>'}
+function render(){document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});try{if(tab==='home')home();else if(tab==='history')history();else if(tab==='exercises')exercises();else if(tab==='stats')stats()}catch(err){console.error(err);app.innerHTML='<div class="card warning"><h2>Workout data needs a refresh</h2><p>The app loaded, but saved browser data caused an error. Your GitHub files are safe.</p><div class="actions"><button class="primary" id="recover">Reload workout data</button><button class="secondary" id="resetLocal">Use imported data only</button></div></div>';document.getElementById('recover').onclick=function(){localStorage.removeItem(V3);workouts=loadWorkouts();save();render()};document.getElementById('resetLocal').onclick=function(){localStorage.removeItem(V3);localStorage.removeItem(V2);localStorage.removeItem(V1);workouts=normalizeWorkouts(seed);save();render()}}}
+function home(){const recent=workouts.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).slice(0,5);app.innerHTML='<div class="grid"><div class="card"><div class="big">'+workouts.length+'</div><div class="muted">Workout days</div></div><div class="card"><div class="big">'+allItems().length+'</div><div class="muted">Logged items</div></div></div><div class="card notice"><b>Version 4 ready</b><p class="muted">One date can contain multiple muscle groups and multiple exercises. Each exercise can have individual set details. Rest-day gaps are normal.</p></div><h2>Recent</h2>'+(recent.map(card).join('')||'<div class="empty">No workouts yet.</div>')}
+function history(){app.innerHTML='<input class="search" id="hs" placeholder="Search date, muscle group, exercise..." /><div id="hl"></div>';function draw(){const q=document.getElementById('hs').value.toLowerCase();const arr=workouts.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).filter(function(w){return JSON.stringify(w).toLowerCase().includes(q)});document.getElementById('hl').innerHTML=arr.map(function(w){return cardWithDelete(w)}).join('')||'<div class="empty">No matching workouts.</div>';document.querySelectorAll('[data-delete-date]').forEach(function(b){b.onclick=function(){if(confirm('Delete this entire workout date?')){workouts=workouts.filter(function(w){return w.date!==b.dataset.deleteDate});save();draw()}}})}document.getElementById('hs').oninput=draw;draw()}
+function cardWithDelete(w){return '<div class="card"><div class="row"><div class="date">'+esc(fmtDate(w.date))+'</div><button class="danger compact" data-delete-date="'+esc(w.date)+'">Delete</button></div>'+(w.date_note?'<div class="warning small">'+esc(w.date_note)+'</div>':'')+(w.sections||[]).map(function(s){return '<div class="section"><h3>'+esc(s.name)+'</h3>'+(s.items||[]).map(function(i){return '<div class="item"><b>'+esc(i.name)+'</b><div class="meta">'+itemMeta(i)+'</div>'+(i.set_details&&i.set_details.length?'<div class="small muted">'+i.set_details.map(function(x,n){return 'Set '+(n+1)+': '+esc(x.weight||'—')+' × '+esc(x.reps||'—')}).join(' · ')+'</div>':'')+'</div>'}).join('')+'</div>'}).join('')+'</div>'}
+function exercises(){const names=[...new Set(allItems().map(function(i){return i.name}))].sort();app.innerHTML='<input class="search" id="es" placeholder="Search an exercise..." /><div id="el"></div>';function draw(){const q=document.getElementById('es').value.toLowerCase();document.getElementById('el').innerHTML=names.filter(function(n){return n.toLowerCase().includes(q)}).map(function(name){const hits=allItems().filter(function(i){return i.name===name}).sort(function(a,b){return b.date.localeCompare(a.date)});return '<div class="card"><div class="row"><b>'+esc(name)+'</b><span class="pill">'+hits.length+' log'+(hits.length===1?'':'s')+'</span></div>'+hits.map(function(h){return '<div class="item"><b>'+esc(fmtDate(h.date))+'</b><div class="meta">'+esc(h.section)+(itemMeta(h)?' · '+itemMeta(h):'')+'</div></div>'}).join('')+'</div>'}).join('')||'<div class="empty">No exercises found.</div>'}document.getElementById('es').oninput=draw;draw()}
+function stats(){const counts={};allItems().forEach(function(i){counts[i.section]=(counts[i.section]||0)+1});const top=Object.entries(counts).sort(function(a,b){return b[1]-a[1]});app.innerHTML='<div class="card"><h2>Activity by muscle group</h2>'+(top.map(function(x){return '<div class="row item"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></div>'}).join('')||'<div class="empty">No activity yet.</div>')+'</div><div class="card"><h2>Export & backup</h2><p class="muted">Export your complete workout history whenever you want.</p><div class="actions"><button class="primary" id="xlsx">Export Excel</button><button class="secondary" id="word">Export Word</button><button class="secondary" id="json">Export JSON backup</button></div><hr><p class="small muted">Your data is stored on this iPhone in the browser. Keep a JSON backup if the data matters to you.</p></div>';document.getElementById('xlsx').onclick=exportXLSX;document.getElementById('word').onclick=exportWord;document.getElementById('json').onclick=exportJSON}
+function newWorkout(){const draft={date:new Date().toISOString().slice(0,10),groups:[]};function makeGroup(){return {id:uid(),name:'',items:[makeItem()]}}function makeItem(){return {id:uid(),name:'',sets:'',weight:'',reps:'',duration:'',notes:'',detailed:true,set_details:[{weight:'',reps:''}]}}draft.groups.push(makeGroup());app.innerHTML='<div class="card"><h2>New Workout</h2><label class="small muted">Date</label><input id="wd" type="date" value="'+draft.date+'"><div id="groups"></div><div class="actions"><button class="secondary" id="addGroup">＋ Add muscle group</button><button class="primary" id="saveAll">Save entire workout</button><button class="secondary" id="cancel">Cancel</button></div></div>';const groupsEl=document.getElementById('groups');function findItem(id){for(const g of draft.groups){const i=g.items.find(function(x){return x.id===id});if(i)return i}return null}function draw(){let h='';draft.groups.forEach(function(g,gi){h+='<div class="group"><div class="row"><h3>Muscle group '+(gi+1)+'</h3>'+(draft.groups.length>1?'<button class="danger compact" data-remove-group="'+g.id+'">Remove</button>':'')+'</div><input data-group-name="'+g.id+'" placeholder="e.g. Back, Biceps, Chest, Cardio" value="'+esc(g.name)+'">';g.items.forEach(function(it,ii){h+='<div class="exerciseRow"><div class="exerciseHead"><input data-name="'+it.id+'" placeholder="Exercise / cardio activity" value="'+esc(it.name)+'">'+(g.items.length>1?'<button class="danger compact" data-remove-item="'+it.id+'">×</button>':'')+'</div><div class="setGrid"><input data-weight="'+it.id+'" placeholder="Weight (e.g. 65 kg)" value="'+esc(it.weight)+'"><input data-reps="'+it.id+'" placeholder="Reps (e.g. 8)" value="'+esc(it.reps)+'"><input data-duration="'+it.id+'" placeholder="Duration (cardio)" value="'+esc(it.duration)+'"></div><textarea data-notes="'+it.id+'" rows="2" placeholder="Notes">'+esc(it.notes)+'</textarea><div class="small muted">Individual sets</div>';it.set_details.forEach(function(st,si){h+='<div class="setRow"><div class="setNo">'+(si+1)+'</div><input data-sw="'+it.id+':'+si+'" placeholder="Weight" value="'+esc(st.weight)+'"><input data-sr="'+it.id+':'+si+'" placeholder="Reps" value="'+esc(st.reps)+'">'+(it.set_details.length>1?'<button class="danger compact" data-remove-set="'+it.id+':'+si+'">×</button>':'')+'</div>'});h+='<button class="secondary compact" data-add-set="'+it.id+'">＋ Add set</button><button class="linkish compact" data-add-item="'+g.id+'">＋ Add exercise</button></div>'});h+='</div>'});groupsEl.innerHTML=h;bind()}function bind(){groupsEl.querySelectorAll('[data-group-name]').forEach(function(e){e.oninput=function(){draft.groups.find(function(g){return g.id===e.dataset.groupName}).name=e.value}});groupsEl.querySelectorAll('[data-name]').forEach(function(e){e.oninput=function(){findItem(e.dataset.name).name=e.value}});groupsEl.querySelectorAll('[data-weight]').forEach(function(e){e.oninput=function(){findItem(e.dataset.weight).weight=e.value}});groupsEl.querySelectorAll('[data-reps]').forEach(function(e){e.oninput=function(){findItem(e.dataset.reps).reps=e.value}});groupsEl.querySelectorAll('[data-duration]').forEach(function(e){e.oninput=function(){findItem(e.dataset.duration).duration=e.value}});groupsEl.querySelectorAll('[data-notes]').forEach(function(e){e.oninput=function(){findItem(e.dataset.notes).notes=e.value}});groupsEl.querySelectorAll('[data-sw]').forEach(function(e){e.oninput=function(){const p=e.dataset.sw.split(':');findItem(p[0]).set_details[Number(p[1])].weight=e.value}});groupsEl.querySelectorAll('[data-sr]').forEach(function(e){e.oninput=function(){const p=e.dataset.sr.split(':');findItem(p[0]).set_details[Number(p[1])].reps=e.value}});groupsEl.querySelectorAll('[data-add-set]').forEach(function(e){e.onclick=function(){findItem(e.dataset.addSet).set_details.push({weight:'',reps:''});draw()}});groupsEl.querySelectorAll('[data-remove-set]').forEach(function(e){e.onclick=function(){const p=e.dataset.removeSet.split(':');findItem(p[0]).set_details.splice(Number(p[1]),1);draw()}});groupsEl.querySelectorAll('[data-add-item]').forEach(function(e){e.onclick=function(){draft.groups.find(function(g){return g.id===e.dataset.addItem}).items.push(makeItem());draw()}});groupsEl.querySelectorAll('[data-remove-item]').forEach(function(e){e.onclick=function(){draft.groups.forEach(function(g){g.items=g.items.filter(function(i){return i.id!==e.dataset.removeItem})});draw()}});groupsEl.querySelectorAll('[data-remove-group]').forEach(function(e){e.onclick=function(){draft.groups=draft.groups.filter(function(g){return g.id!==e.dataset.removeGroup});draw()}})}document.getElementById('addGroup').onclick=function(){draft.groups.push(makeGroup());draw()};document.getElementById('cancel').onclick=function(){render()};document.getElementById('saveAll').onclick=function(){const date=document.getElementById('wd').value;const groups=draft.groups.map(function(g){return {name:g.name.trim(),items:g.items.filter(function(i){return i.name.trim()}).map(function(i){return {name:i.name.trim(),raw:i.name.trim(),sets:null,weight:i.weight.trim()||null,reps:i.reps.trim()||null,duration:i.duration.trim()||null,notes:i.notes.trim()?[i.notes.trim()]:[],set_details:i.set_details.filter(function(s){return s.weight||s.reps})}})}}).filter(function(g){return g.name&&g.items.length});if(!date||!groups.length){alert('Enter a date, at least one muscle group, and at least one exercise.');return}const existing=workouts.find(function(w){return w.date===date});if(existing){groups.forEach(function(g){let s=existing.sections.find(function(x){return x.name.toLowerCase()===g.name.toLowerCase()});if(!s){s={name:g.name,items:[]};existing.sections.push(s)}s.items.push.apply(s.items,g.items)})}else workouts.push({date:date,source_date:fmtDate(date),date_note:'',sections:groups});save();tab='history';render()};draw()}
+function exportJSON(){downloadBlob(new Blob([JSON.stringify(workouts,null,2)],{type:'application/json'}),'gym-tracker-backup.json')}
+function flatRows(){const rows=[['Date','Muscle Group','Exercise','Sets','Weight','Reps','Duration','Notes','Set Details']];workouts.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(w){(w.sections||[]).forEach(function(s){(s.items||[]).forEach(function(i){rows.push([fmtDate(w.date),s.name,i.name,i.sets||'',i.weight||'',i.reps||'',i.duration||'',(i.notes||[]).join('; '),(i.set_details||[]).map(function(x,n){return 'Set '+(n+1)+': '+(x.weight||'')+' x '+(x.reps||'')}).join('; ')])})})});return rows}
+function xmlEscape(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+function exportWord(){let body='<h1>My Gym Tracker</h1><p>Workout history exported '+new Date().toLocaleDateString()+'</p>';workouts.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(w){body+='<h2>'+xmlEscape(fmtDate(w.date))+'</h2>';(w.sections||[]).forEach(function(s){body+='<h3>'+xmlEscape(s.name)+'</h3><ul>';(s.items||[]).forEach(function(i){body+='<li><b>'+xmlEscape(i.name)+'</b> — '+xmlEscape(itemMetaPlain(i))+'</li>'});body+='</ul>'})});const doc='<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:40px}</style></head><body>'+body+'</body></html>';downloadBlob(new Blob([doc],{type:'application/msword'}),'gym-tracker-report.doc')}
+function itemMetaPlain(i){const b=[];if(i.weight)b.push(i.weight);if(i.reps)b.push(i.reps+' reps');if(i.duration)b.push(i.duration);if(i.notes&&i.notes.length)b.push(i.notes.join('; '));if(i.set_details&&i.set_details.length)b.push(i.set_details.map(function(x,n){return 'Set '+(n+1)+': '+(x.weight||'—')+' x '+(x.reps||'—')}).join(', '));return b.join(' · ')}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000)}
+const crcTable=(function(){let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0}return t})();
 function crc32(bytes){let c=0xffffffff;for(const b of bytes)c=crcTable[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0}
-function u16(n){return new Uint8Array([n&255,(n>>>8)&255])}
-function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255])}
-function concatBytes(parts){let len=parts.reduce((n,p)=>n+p.length,0),o=new Uint8Array(len),i=0;for(const p of parts){o.set(p,i);i+=p.length}return o}
-function zipStore(files){
- const enc=new TextEncoder(), locals=[], centrals=[]; let offset=0;
- for(const f of files){
-  const name=enc.encode(f.name), data=typeof f.data==='string'?enc.encode(f.data):f.data, crc=crc32(data);
-  const local=concatBytes([u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);
-  locals.push(local);
-  const central=concatBytes([u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]);
-  centrals.push(central); offset+=local.length;
- }
- const cdOffset=offset, cdSize=centrals.reduce((n,p)=>n+p.length,0), end=concatBytes([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(cdSize),u32(cdOffset),u16(0)]);
- return concatBytes([...locals,...centrals,end]);
-}
-function xlsxCell(v){
- const s=xmlEscape(v); return `<c t="inlineStr"><is><t>${s}</t></is></c>`;
-}
-function exportXLSX(){
- const rows=flatRows();
- const sheetRows=rows.map((r,ri)=>`<row r="${ri+1}">${r.map(xlsxCell).join('')}</row>`).join('');
- const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
- const files=[
-  {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`},
-  {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
-  {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Workouts" sheetId="1" r:id="rId1"/></sheets></workbook>`},
-  {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`},
-  {name:'xl/worksheets/sheet1.xml',data:sheet}
- ];
- const bytes=zipStore(files);
- downloadBlob(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'gym-tracker-workouts.xlsx');
-}
-
-document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
-document.getElementById('newBtn').onclick=newWorkout;
-render();
+function u16(n){return new Uint8Array([n&255,(n>>>8)&255])}function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255])}function concatBytes(ps){let len=ps.reduce(function(n,p){return n+p.length},0),o=new Uint8Array(len),i=0;ps.forEach(function(p){o.set(p,i);i+=p.length});return o}
+function zipStore(files){const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;files.forEach(function(f){const name=enc.encode(f.name),data=typeof f.data==='string'?enc.encode(f.data):f.data,crc=crc32(data);const local=concatBytes([u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);locals.push(local);const central=concatBytes([u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]);centrals.push(central);offset+=local.length});return concatBytes(locals.concat(centrals,[concatBytes([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(centrals.reduce(function(n,p){return n+p.length},0)),u32(offset),u16(0)])]))}
+function exportXLSX(){const enc=new TextEncoder(),rows=flatRows(),sheetRows=rows.map(function(r,ri){return '<row r="'+(ri+1)+'">'+r.map(function(v){return '<c t="inlineStr"><is><t>'+xmlEscape(v)+'</t></is></c>'}).join('')+'</row>'}).join('');const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+sheetRows+'</sheetData></worksheet>';const files=[{name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'},{name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},{name:'xl/workbook.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Workouts" sheetId="1" r:id="rId1"/></sheets></workbook>'},{name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'},{name:'xl/worksheets/sheet1.xml',data:sheet}];downloadBlob(new Blob([zipStore(files)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'gym-tracker-workouts.xlsx')}
+document.querySelectorAll('#nav button').forEach(function(b){b.onclick=function(){tab=b.dataset.tab;render()}});document.getElementById('newBtn').onclick=newWorkout;render();
 </script>
 </body>
 </html>

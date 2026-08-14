@@ -1,81 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
-<title>My Gym Tracker</title>
-<link rel="manifest" href="manifest.json">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>My Gym Tracker</title><link rel="manifest" href="manifest.json">
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827}
+:root{--bg:#f5f6f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--danger:#b91c1c}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:5;background:rgba(245,246,248,.92);backdrop-filter:blur(12px);padding:18px 16px 10px}
+header{position:sticky;top:0;z-index:5;background:rgba(245,246,248,.94);backdrop-filter:blur(14px);padding:18px 16px 10px}
 h1{font-size:28px;margin:0 0 4px}.sub{color:var(--muted);font-size:14px}
-nav{display:flex;gap:8px;padding:8px 12px;position:sticky;top:70px;z-index:4;background:var(--bg);overflow:auto}
-nav button{border:0;background:#e5e7eb;border-radius:999px;padding:9px 13px;white-space:nowrap;font-weight:600}
-nav button.active{background:#111827;color:#fff}
-main{padding:8px 12px 40px;max-width:760px;margin:auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin:10px 0;box-shadow:0 1px 2px #00000008}
-.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.date{font-weight:800;font-size:17px}.muted{color:var(--muted)}
-.section{margin-top:14px}.section h3{margin:0 0 8px;font-size:15px}
-.item{padding:10px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
-.item b{display:block}.meta{font-size:13px;color:var(--muted);margin-top:3px}
-input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
-.search{margin:8px 0 12px}.pill{display:inline-block;background:#eef0f3;border-radius:999px;padding:4px 8px;font-size:12px;margin:2px}
-.big{font-size:34px;font-weight:800}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button.primary{background:#111827;color:white;border:0;border-radius:12px;padding:12px 15px;font-weight:700}
-button.secondary{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-weight:700}
-.empty{text-align:center;padding:30px;color:var(--muted)}
-.small{font-size:12px}.warning{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
-</style>
-</head>
+nav{display:flex;gap:8px;padding:8px 12px;position:sticky;top:69px;z-index:4;background:var(--bg);overflow:auto}
+nav button{border:0;background:#e5e7eb;border-radius:999px;padding:9px 13px;white-space:nowrap;font-weight:650}nav button.active{background:#111827;color:#fff}
+main{padding:8px 12px 70px;max-width:780px;margin:auto}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin:10px 0;box-shadow:0 1px 2px #00000008}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.date{font-weight:800;font-size:18px}.muted{color:var(--muted)}
+.section{margin-top:14px}.section h3{margin:0 0 8px;font-size:15px}.item{padding:10px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}.item b{display:block}.meta{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
+.search,input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px;font-family:inherit}.search{margin:8px 0 12px}
+button.primary{background:#111827;color:white;border:0;border-radius:12px;padding:12px 15px;font-weight:700}button.secondary{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.big{font-size:34px;font-weight:800}.pill{display:inline-block;background:#eef0f3;border-radius:999px;padding:4px 8px;font-size:12px;margin:2px}
+.empty{text-align:center;padding:30px;color:var(--muted)}.warning{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.small{font-size:12px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fab{position:fixed;right:18px;bottom:18px;z-index:10;border:0;border-radius:999px;padding:14px 18px;background:#111827;color:#fff;font-weight:800;box-shadow:0 6px 20px #0003}
+hr{border:0;border-top:1px solid var(--line);margin:15px 0}
+</style></head>
 <body>
-<header><h1>My Gym Tracker</h1><div class="sub">Your workout history, structured and searchable</div></header>
-<nav id="nav">
-<button data-tab="home">Home</button><button data-tab="history">History</button><button data-tab="exercises">Exercises</button><button data-tab="stats">Stats</button>
-</nav>
+<header><h1>My Gym Tracker</h1><div class="sub">Structured, searchable, and yours</div></header>
+<nav id="nav"><button data-tab="home">Home</button><button data-tab="history">History</button><button data-tab="exercises">Exercises</button><button data-tab="stats">Stats</button></nav>
 <main id="app"></main>
+<button class="fab" id="newBtn">＋ New Workout</button>
 <script src="data.js"></script>
 <script>
-const app=document.getElementById('app');
-let workouts=window.GYM_DATA.workouts||[];
+const seed=window.GYM_DATA.workouts||[];
+const KEY='gymTrackerWorkoutsV2';
+let workouts=JSON.parse(localStorage.getItem(KEY)||'null')||seed;
+if(!localStorage.getItem(KEY)) localStorage.setItem(KEY,JSON.stringify(workouts));
 let tab='home';
+const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-function allItems(){return workouts.flatMap(w=>w.sections.flatMap(s=>s.items.map(i=>({...i,date:w.date_label,section:s.name}))));}
+const fmtDate=iso=>{const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
+function allItems(){return workouts.flatMap(w=>w.sections.flatMap(s=>(s.items||[]).map(i=>({...i,date:w.date,section:s.name}))))}
+function save(){localStorage.setItem(KEY,JSON.stringify(workouts))}
 function card(w){
- return `<div class="card"><div class="row"><div class="date">${esc(w.date_label)}</div><div class="small muted">${w.sections.length} section${w.sections.length==1?'':'s'}</div></div>
- ${w.flags.length?`<div class="warning card small" style="margin:10px 0 0;padding:10px">${w.flags.map(esc).join('<br>')}</div>`:''}
- ${w.sections.map(s=>`<div class="section"><h3>${esc(s.name)}</h3>${s.items.map(i=>`<div class="item"><b>${esc(i.exercise)}</b><div class="meta">${i.sets?esc(i.sets)+' sets · ':''}${i.reps?esc(i.reps)+' reps · ':''}${i.weight?esc(i.weight)+' · ':''}${i.duration?esc(i.duration)+' · ':''}${i.notes?esc(i.notes):''}</div></div>`).join('')}</div>`).join('')}</div>`;
+ return `<div class="card"><div class="row"><div class="date">${esc(fmtDate(w.date))}</div><span class="pill">${w.sections.length} section${w.sections.length===1?'':'s'}</span></div>
+ ${w.date_note?`<div class="meta">${esc(w.date_note)}</div>`:''}
+ ${w.flags?.length?`<div class="warning card small" style="margin:10px 0 0;padding:10px">${w.flags.map(esc).join('<br>')}</div>`:''}
+ ${w.sections.map(s=>`<div class="section"><h3>${esc(s.name)}</h3>${(s.items||[]).map(i=>`<div class="item"><b>${esc(i.name)}</b><div class="meta">${i.sets?esc(i.sets)+' sets · ':''}${i.weight?esc(i.weight)+' · ':''}${i.reps?esc(i.reps)+' reps · ':''}${i.duration?esc(i.duration)+' · ':''}${i.notes?.length?esc(i.notes.join('; ')):''}</div></div>`).join('')}</div>`).join('')}</div>`;
 }
-function render(){
- document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
- if(tab==='home') renderHome(); else if(tab==='history') renderHistory(); else if(tab==='exercises') renderExercises(); else renderStats();
-}
-function renderHome(){
- const recent=[...workouts].slice(-5).reverse();
+function render(){document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab)); if(tab==='home')home();if(tab==='history')history();if(tab==='exercises')exercises();if(tab==='stats')stats();}
+function home(){
+ const recent=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
  app.innerHTML=`<div class="grid"><div class="card"><div class="big">${workouts.length}</div><div class="muted">Workout days</div></div><div class="card"><div class="big">${allItems().length}</div><div class="muted">Logged items</div></div></div>
- <div class="card"><b>What you can do now</b><p class="muted">Search your history, browse by date, and inspect any exercise. This first version is a safe prototype using your imported notes.</p></div>
+ <div class="card"><b>Imported history corrected</b><p class="muted">Dates such as 06/8, 07/8 and 13/8 are now recognized. Cardio is no longer interpreted as sets or kilograms. The source date 21/08/2026 is flagged because it appears between July entries.</p></div>
  <h2>Recent</h2>${recent.map(card).join('')}`;
 }
-function renderHistory(){
- app.innerHTML=`<input class="search" id="hs" placeholder="Search date, muscle group, exercise..." /> <div id="hl"></div>`;
- const draw=()=>{const q=document.getElementById('hs').value.toLowerCase();document.getElementById('hl').innerHTML=workouts.filter(w=>JSON.stringify(w).toLowerCase().includes(q)).slice().reverse().map(card).join('')||'<div class="empty">No matching workouts.</div>'};
- document.getElementById('hs').oninput=draw; draw();
+function history(){
+ app.innerHTML=`<input class="search" id="hs" placeholder="Search date, muscle group, exercise..." /><div id="hl"></div>`;
+ const draw=()=>{const q=document.getElementById('hs').value.toLowerCase();const arr=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).filter(w=>JSON.stringify(w).toLowerCase().includes(q));document.getElementById('hl').innerHTML=arr.map(card).join('')||'<div class="empty">No matching workouts.</div>'};document.getElementById('hs').oninput=draw;draw();
 }
-function renderExercises(){
- const names=[...new Set(allItems().map(i=>i.exercise.replace(/^\d+\.\s*/,'')))].sort((a,b)=>a.localeCompare(b));
+function exercises(){
+ const names=[...new Set(allItems().map(i=>i.name))].sort((a,b)=>a.localeCompare(b));
  app.innerHTML=`<input class="search" id="es" placeholder="Search an exercise..." /><div id="el"></div>`;
- const draw=()=>{const q=document.getElementById('es').value.toLowerCase(); const n=names.filter(x=>x.toLowerCase().includes(q));
- document.getElementById('el').innerHTML=n.map(name=>{const hits=allItems().filter(i=>i.exercise.replace(/^\d+\.\s*/,'')===name);return `<div class="card"><div class="row"><b>${esc(name)}</b><span class="pill">${hits.length} log${hits.length==1?'':'s'}</span></div>${hits.slice().reverse().map(h=>`<div class="item"><b>${esc(h.date)}</b><div class="meta">${esc(h.section)} · ${h.sets?esc(h.sets)+' sets · ':''}${h.reps?esc(h.reps)+' reps · ':''}${h.weight?esc(h.weight)+' · ':''}${h.duration?esc(h.duration)+' · ':''}${h.notes?esc(h.notes):''}</div></div>`).join('')}</div>`}).join('')||'<div class="empty">No exercises found.</div>'};
- document.getElementById('es').oninput=draw; draw();
+ const draw=()=>{const q=document.getElementById('es').value.toLowerCase();const n=names.filter(x=>x.toLowerCase().includes(q));document.getElementById('el').innerHTML=n.map(name=>{const hits=allItems().filter(i=>i.name===name).sort((a,b)=>b.date.localeCompare(a.date));return `<div class="card"><div class="row"><b>${esc(name)}</b><span class="pill">${hits.length} log${hits.length===1?'':'s'}</span></div>${hits.map(h=>`<div class="item"><b>${esc(fmtDate(h.date))}</b><div class="meta">${esc(h.section)} · ${h.sets?esc(h.sets)+' sets · ':''}${h.weight?esc(h.weight)+' · ':''}${h.reps?esc(h.reps)+' reps · ':''}${h.duration?esc(h.duration)+' · ':''}${h.notes?.length?esc(h.notes.join('; ')):''}</div></div>`).join('')}</div>`}).join('')||'<div class="empty">No exercises found.</div>'};document.getElementById('es').oninput=draw;draw();
 }
-function renderStats(){
- const counts={}; allItems().forEach(i=>counts[i.section]=(counts[i.section]||0)+1);
- const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+function stats(){
+ const counts={};allItems().forEach(i=>counts[i.section]=(counts[i.section]||0)+1);const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
  app.innerHTML=`<div class="card"><h2>Logged activity</h2>${top.map(([k,v])=>`<div class="row item"><span>${esc(k)}</span><b>${v}</b></div>`).join('')}</div>
- <div class="card"><b>Data note</b><p class="muted">The imported PDF contains inconsistent dates and exercise names. I have preserved the source wording rather than silently changing your history. We will normalize names and flag date anomalies before making this your permanent database.</p></div>`;
+ <div class="card"><b>Backup</b><p class="muted">Your new entries are stored on this iPhone. Use Export before changing phones or clearing Safari data.</p><div class="actions"><button class="primary" id="export">Export backup</button><button class="secondary" id="reset">Reset to imported history</button></div></div>`;
+ document.getElementById('export').onclick=()=>{const blob=new Blob([JSON.stringify(workouts,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gym-tracker-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+ document.getElementById('reset').onclick=()=>{if(confirm('Reset local data to the imported history? New workouts on this phone will be removed.')){workouts=seed;save();render()}};
+}
+function newWorkout(){
+ app.innerHTML=`<div class="card"><h2>New Workout</h2><div class="formgrid"><div><label class="small muted">Date</label><input id="d" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div><label class="small muted">Section / muscle group</label><input id="sec" placeholder="e.g. Back"></div><div class="full"><label class="small muted">Exercise</label><input id="ex" placeholder="e.g. Lat Pulldown"></div><div><label class="small muted">Sets</label><input id="sets" inputmode="numeric" placeholder="3"></div><div><label class="small muted">Weight</label><input id="wt" placeholder="65 kg"></div><div><label class="small muted">Reps</label><input id="reps" placeholder="8"></div><div><label class="small muted">Duration</label><input id="dur" placeholder="10 min"></div><div class="full"><label class="small muted">Notes</label><textarea id="notes" rows="2" placeholder="drop set, superset, etc."></textarea></div></div><div class="actions"><button class="primary" id="saveItem">Save workout</button><button class="secondary" id="cancel">Cancel</button></div></div>`;
+ document.getElementById('cancel').onclick=()=>render();
+ document.getElementById('saveItem').onclick=()=>{
+  const date=document.getElementById('d').value, sec=document.getElementById('sec').value.trim()||'General', ex=document.getElementById('ex').value.trim();
+  if(!date||!ex){alert('Please enter a date and exercise.');return}
+  let w=workouts.find(x=>x.date===date);if(!w){w={date,source_date:fmtDate(date),date_note:'',sections:[]};workouts.push(w)}
+  let s=w.sections.find(x=>x.name.toLowerCase()===sec.toLowerCase());if(!s){s={name:sec,items:[]};w.sections.push(s)}
+  s.items.push({name:ex,raw:ex,sets:Number(document.getElementById('sets').value)||null,weight:document.getElementById('wt').value.trim()||null,reps:document.getElementById('reps').value.trim()||null,duration:document.getElementById('dur').value.trim()||null,notes:document.getElementById('notes').value.trim()? [document.getElementById('notes').value.trim()]:[]});
+  save();tab='history';render();
+ };
 }
 document.getElementById('nav').addEventListener('click',e=>{if(e.target.dataset.tab){tab=e.target.dataset.tab;render()}});
-render();
-</script>
-</body></html>
+document.getElementById('newBtn').onclick=newWorkout;render();
+</script></body></html>
